@@ -1,22 +1,20 @@
 nextflow.enable.dsl=2
 
-// include { SRST2_SRST2 } from './modules/process_srst2.nf'
- include { SRST2_SRST2 } from './modules/process_srst2_edit.nf'
+include { SRST2_SRST2 } from './modules/process_srst2_edit.nf'
+include { COLLATE_FULL_GENE_RESULTS } from './modules/process_srst2_edit.nf'
+
 workflow {
-    // Define inputs, typically passed via command line parameters
-  //	reads_ch = channel
-    //                      .fromPath( "${params.reads}", checkIfExists: true )
-      //                    .map { file -> tuple(file.simpleName, file) }
+  //step1
+    reads_ch = channel
+	.fromFilePairs( "${params.reads}/${params.fastq_pattern}", checkIfExists: true )
+			
+    gene_db_ch = Channel.fromPath(params.gene_db)
 
-       reads_ch = channel
-			.fromFilePairs( "${params.reads}/${params.fastq_pattern}", checkIfExists: true )
-	    		
-           db_ch = Channel.fromPath(params.db)
-          reads_ch.combine(db_ch).view()
-	  SRST2_SRST2(reads_ch.combine(db_ch))
+//          reads_ch.combine(gene_db_ch).view()			
+	 
+// step 2
+    SRST2_SRST2(reads_ch.combine(gene_db_ch))
 
-//    reads_ch = Channel.fromPath("${params.reads}/*{.fastq,.fq}.gz")            // FASTQ files path
-
-  //  db_ch = Channel.fromPath(params.db)                   // Database file
+    COLLATE_FULL_GENE_RESULTS(SRST2_SRST2.out.fullgene_results)
 
 }
