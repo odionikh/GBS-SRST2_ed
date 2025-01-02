@@ -10,7 +10,7 @@ process SRST2_SRST2 {
 
     output:
     tuple val(meta), path("*_genes_*_results.txt")               , optional:true, emit: gene_results
-    tuple val(meta), path("*_fullgenes_*_results.txt")           , optional:true, emit: fullgene_results
+    path("*_fullgenes_*_results.txt")           , optional:true, emit: fullgene_results
     tuple val(meta), path("*_mlst_*_results.txt")                , optional:true, emit: mlst_results
     tuple val(meta), path("*.pileup")                            ,                emit: pileup
     tuple val(meta), path("*.sorted.bam")                        ,                emit: sorted_bam
@@ -45,15 +45,20 @@ process COLLATE_FULL_GENE_RESULTS {
     publishDir "${params.output_dir}/fullgenes/", mode:'copy'
     
     input:
-    tuple val(meta), path(fullgene_results)
+    path(fullgene_results)
 
     output:
     path "final_GBS.txt"
 
     script:
-    def cat_files = fullgene_results.collect{ "cat $it >> final_GBS.txt" }.join("\n")
+    
     """
-    ${cat_files}
+    FULL_GENE_RESULT_FILES=(${fullgene_results})
+    for index in \${!FULL_GENE_RESULT_FILES[@]}; do
+    FULL_GENE_RESULT_FILE=\${FULL_GENE_RESULT_FILES[\$index]}
+    awk -v OFS='\\t' 'FNR>=1 { print \$0 }' \${FULL_GENE_RESULT_FILE} >> final_GBS.txt
+
+    done
 
     """
 }

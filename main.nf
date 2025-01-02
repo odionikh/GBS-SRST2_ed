@@ -14,7 +14,9 @@ workflow {
 	 
 // step 2
     SRST2_SRST2(reads_ch.combine(gene_db_ch))
+    
+    collected_fullgene_ch = SRST2_SRST2.out.fullgene_result.collect( sort: {a, b -> a[0].getBaseName() <=> b[0].getBaseName()} )
 
-    COLLATE_FULL_GENE_RESULTS(SRST2_SRST2.out.fullgene_results)
+    COLLATE_FULL_GENE_RESULTS(collected_fullgene_ch)
 
 }
